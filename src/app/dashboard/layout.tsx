@@ -31,7 +31,9 @@ export default async function DashboardLayout({
             >
               {account.plan === "pro" ? "Pro" : "Free"}
             </span>
-            <BillingButton plan={account.plan} />
+            {process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID && (
+              <BillingButton plan={account.plan} />
+            )}
             <SignOutButton />
           </div>
         </div>

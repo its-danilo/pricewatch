@@ -2,32 +2,50 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { TrendingDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
+  const router = useRouter();
+  const [mode, setMode] = useState<"signup" | "signin">("signup");
   const [email, setEmail] = useState("");
-  const [status, setStatus] = useState<"idle" | "sending" | "sent" | "error">(
-    "idle",
-  );
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(null);
+  const [loading, setLoading] = useState(false);
 
-  async function sendMagicLink(e: React.FormEvent) {
+  async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
-    setStatus("sending");
+    setError(null);
+    setInfo(null);
+    setLoading(true);
     const supabase = createClient();
-    const { error } = await supabase.auth.signInWithOtp({
-      email,
-      options: { emailRedirectTo: `${location.origin}/auth/callback` },
-    });
-    setStatus(error ? "error" : "sent");
-  }
 
-  async function signInWithGoogle() {
-    const supabase = createClient();
-    await supabase.auth.signInWithOAuth({
-      provider: "google",
-      options: { redirectTo: `${location.origin}/auth/callback` },
-    });
+    if (mode === "signup") {
+      const { data, error } = await supabase.auth.signUp({ email, password });
+      if (error) {
+        setError(error.message);
+        setLoading(false);
+        return;
+      }
+      if (data.session) {
+        router.replace("/dashboard");
+        return;
+      }
+      setInfo("Account created. Check your email to confirm, then sign in.");
+      setMode("signin");
+      setLoading(false);
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({ email, password });
+    if (error) {
+      setError(error.message);
+      setLoading(false);
+      return;
+    }
+    router.replace("/dashboard");
   }
 
   return (
@@ -41,53 +59,62 @@ export default function LoginPage() {
         </Link>
 
         <div className="mt-8 rounded-2xl border border-slate-200 bg-white p-7 shadow-sm">
-          <h1 className="text-xl font-semibold text-slate-900">Welcome</h1>
+          <h1 className="text-xl font-semibold text-slate-900">
+            {mode === "signup" ? "Create your account" : "Welcome back"}
+          </h1>
           <p className="mt-1 text-sm text-slate-500">
-            Sign in or create your account.
+            {mode === "signup"
+              ? "Start tracking prices in seconds."
+              : "Sign in to your dashboard."}
           </p>
 
-          {status === "sent" ? (
-            <p className="mt-6 rounded-lg bg-emerald-50 px-4 py-3 text-sm text-emerald-800">
-              Check your inbox — we sent a magic link to <b>{email}</b>.
-            </p>
-          ) : (
-            <>
-              <button
-                onClick={signInWithGoogle}
-                className="mt-6 flex w-full items-center justify-center gap-2 rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
-              >
-                Continue with Google
-              </button>
+          <form onSubmit={handleSubmit} className="mt-6 space-y-3">
+            <input
+              type="email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@email.com"
+              className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            />
+            <input
+              type="password"
+              required
+              minLength={6}
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Password (min. 6 characters)"
+              className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
+            />
+            {error && <p className="text-sm text-red-600">{error}</p>}
+            {info && <p className="text-sm text-emerald-700">{info}</p>}
+            <button
+              type="submit"
+              disabled={loading}
+              className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
+            >
+              {loading
+                ? "…"
+                : mode === "signup"
+                  ? "Create account"
+                  : "Sign in"}
+            </button>
+          </form>
 
-              <div className="my-5 flex items-center gap-3 text-xs text-slate-400">
-                <span className="h-px flex-1 bg-slate-200" /> or{" "}
-                <span className="h-px flex-1 bg-slate-200" />
-              </div>
-
-              <form onSubmit={sendMagicLink} className="space-y-3">
-                <input
-                  type="email"
-                  required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  placeholder="you@email.com"
-                  className="w-full rounded-lg border border-slate-200 px-3.5 py-2.5 text-sm outline-none focus:border-emerald-500 focus:ring-1 focus:ring-emerald-500"
-                />
-                <button
-                  type="submit"
-                  disabled={status === "sending"}
-                  className="w-full rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white hover:bg-emerald-700 disabled:opacity-60"
-                >
-                  {status === "sending" ? "Sending…" : "Send magic link"}
-                </button>
-                {status === "error" && (
-                  <p className="text-sm text-red-600">
-                    Something went wrong. Please try again.
-                  </p>
-                )}
-              </form>
-            </>
-          )}
+          <p className="mt-5 text-center text-sm text-slate-500">
+            {mode === "signup" ? "Already have an account? " : "New here? "}
+            <button
+              type="button"
+              onClick={() => {
+                setMode(mode === "signup" ? "signin" : "signup");
+                setError(null);
+                setInfo(null);
+              }}
+              className="font-medium text-emerald-600 hover:underline"
+            >
+              {mode === "signup" ? "Sign in" : "Create one"}
+            </button>
+          </p>
         </div>
       </div>
     </div>
