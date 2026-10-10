@@ -3,7 +3,8 @@
 import { useState } from "react";
 import { ExternalLink, Plus, Trash2 } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
-import { PLAN_LIMITS, type Monitor, type Plan } from "@/lib/types";
+import { PLAN_LIMITS, type Monitor, type Plan, type PricePoint } from "@/lib/types";
+import { PriceChart } from "@/components/price-chart";
 
 function statusBadge(status: string | null) {
   switch (status) {
@@ -22,10 +23,12 @@ export function MonitorsManager({
   initialMonitors,
   userId,
   plan,
+  history,
 }: {
   initialMonitors: Monitor[];
   userId: string;
   plan: Plan;
+  history: Record<string, PricePoint[]>;
 }) {
   const [monitors, setMonitors] = useState<Monitor[]>(initialMonitors);
   const [url, setUrl] = useState("");
@@ -218,6 +221,8 @@ export function MonitorsManager({
                   </span>
                 </label>
               </div>
+
+              <PriceChart points={history[m.id] ?? []} currency={m.currency ?? "USD"} />
             </div>
           );
         })}

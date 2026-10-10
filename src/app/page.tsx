@@ -88,27 +88,42 @@ export default function Home() {
         <div className="mx-auto mt-10 grid max-w-3xl gap-6 sm:grid-cols-2">
           <PlanCard
             name="Free"
-            price="$0"
-            features={["3 monitors", "Daily checks", "Email alerts"]}
+            price="R$ 0"
+            features={["3 monitors", "Daily checks", "Email alerts", "Price history chart"]}
             cta="Get started"
           />
           <PlanCard
             name="Pro"
-            price="$7"
+            price="R$ 19,90"
             highlighted
             features={[
               "30 monitors",
               "Hourly checks",
-              "Email + Telegram alerts",
-              "Price history export",
+              "Email alerts",
+              "Price history chart",
             ]}
             cta="Start free, upgrade later"
           />
         </div>
+        <p className="mt-6 text-center text-sm text-slate-500">
+          Prices in Brazilian reais (BRL). Cancel anytime, with a full refund within 7 days of your
+          first payment.{" "}
+          <Link href="/terms" className="font-medium text-emerald-600 hover:underline">
+            Terms, billing and refunds
+          </Link>
+        </p>
       </section>
 
       <footer className="mt-auto border-t border-slate-100 py-8 text-center text-sm text-slate-500">
         Pricewatch · built with Next.js, a Python worker, Supabase and Stripe
+        <div className="mt-2 flex justify-center gap-4">
+          <Link href="/terms" className="hover:text-slate-900">
+            Terms, billing and refunds
+          </Link>
+          <a href="mailto:joaobolinha194@gmail.com" className="hover:text-slate-900">
+            Contact
+          </a>
+        </div>
       </footer>
     </div>
   );
