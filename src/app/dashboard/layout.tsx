@@ -9,7 +9,7 @@ export default async function DashboardLayout({
 }: {
   children: React.ReactNode;
 }) {
-  const { account } = await getAccount();
+  const { account, isOwner } = await getAccount();
 
   return (
     <div className="min-h-full bg-slate-50">
@@ -31,7 +31,7 @@ export default async function DashboardLayout({
             >
               {account.plan === "pro" ? "Pro" : "Free"}
             </span>
-            {process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID && (
+            {process.env.NEXT_PUBLIC_STRIPE_PRO_PRICE_ID && !isOwner && (
               <BillingButton plan={account.plan} />
             )}
             <SignOutButton />

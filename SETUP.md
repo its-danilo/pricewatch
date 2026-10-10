@@ -5,8 +5,10 @@ cover all of this.
 
 ## 1. Supabase
 1. Create a project at [supabase.com](https://supabase.com).
-2. **SQL Editor**: paste and run `supabase/migrations/0001_init.sql`. This creates
-   the tables, RLS policies and the trigger that auto-creates an account on signup.
+2. **SQL Editor**: run each file in `supabase/migrations/` in order.
+   `0001_init.sql` creates the tables, RLS policies and the trigger that
+   auto-creates an account on signup; `0002_lock_billing_columns.sql` keeps
+   `plan` and the Stripe columns server-only.
 3. (Optional) Google login: **Authentication > Providers > Google**.
 4. Copy from **Project Settings > API** into `.env.local`:
    - `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
@@ -52,5 +54,7 @@ python check_prices.py
 - **Worker (GitHub Actions)**: already scheduled in
   `.github/workflows/check-prices.yml` (hourly). In the repo, add
   **Settings > Secrets and variables > Actions**: `SUPABASE_URL`,
-  `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `ALERT_FROM_EMAIL`.
+  `SUPABASE_SERVICE_ROLE_KEY`, `RESEND_API_KEY`, `ALERT_FROM_EMAIL` and, optionally,
+  `OWNER_EMAILS` (same value as in Vercel: accounts that get Pro without a
+  subscription).
   Trigger a manual run from the Actions tab to test.

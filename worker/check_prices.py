@@ -27,6 +27,8 @@ ALERT_FROM = os.getenv("ALERT_FROM_EMAIL", "Pricewatch <onboarding@resend.dev>")
 UA = "Mozilla/5.0 (compatible; PricewatchBot/1.0; +https://github.com/its-danilo/pricewatch)"
 FREE_INTERVAL = timedelta(hours=24)
 PRO_INTERVAL = timedelta(hours=1)
+# Accounts with these emails are checked on the Pro schedule without a subscription.
+OWNER_EMAILS = {e.strip().lower() for e in os.getenv("OWNER_EMAILS", "").split(",") if e.strip()}
 
 rest = httpx.Client(
     base_url=f"{SUPABASE_URL}/rest/v1",
@@ -199,6 +201,10 @@ def process(monitor: dict) -> None:
 def main() -> None:
     monitors = get_active_monitors()
     plans = get_plans()
+    if OWNER_EMAILS:
+        for user_id in {m["user_id"] for m in monitors}:
+            if plans.get(user_id) != "pro" and (get_user_email(user_id) or "").lower() in OWNER_EMAILS:
+                plans[user_id] = "pro"
     print(f"{len(monitors)} active monitor(s)")
 
     checked = 0
