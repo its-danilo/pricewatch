@@ -41,6 +41,10 @@ export async function POST() {
     customer: customerId,
     line_items: [{ price: PRO_PRICE_ID, quantity: 1 }],
     allow_promotion_codes: true,
+    // Ask for a card only when something is due: a 100%-off promotion code
+    // then subscribes without one. Anyone paying the normal price still enters
+    // a card, because the first invoice is not zero.
+    payment_method_collection: "if_required",
     success_url: `${siteUrl}/dashboard?upgraded=1`,
     cancel_url: `${siteUrl}/dashboard`,
   });
