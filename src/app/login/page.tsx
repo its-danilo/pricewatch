@@ -1,18 +1,53 @@
 "use client";
 
-import { useState } from "react";
+import { Suspense, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { TrendingDown } from "lucide-react";
 import { createClient } from "@/lib/supabase/client";
 
+/** Turns Supabase auth errors into messages that say what to do next. Supabase
+ * returns the same error for an unknown email and a wrong password on purpose,
+ * so the message covers both. */
+function friendlyError(message: string): string {
+  const m = message.toLowerCase();
+  if (m.includes("invalid login credentials")) {
+    return "Wrong email or password. No account yet? Create one below.";
+  }
+  if (m.includes("email not confirmed")) {
+    return "Confirm your email first: open the link we sent to your inbox.";
+  }
+  if (m.includes("rate limit")) {
+    return "Too many emails were sent in a short time. Wait a few minutes and try again.";
+  }
+  return message;
+}
+
 export default function LoginPage() {
+  // useSearchParams needs a Suspense boundary so /login can still be prerendered.
+  return (
+    <Suspense>
+      <LoginForm />
+    </Suspense>
+  );
+}
+
+function LoginForm() {
   const router = useRouter();
-  const [mode, setMode] = useState<"signup" | "signin">("signup");
+  const params = useSearchParams();
+  const [mode, setMode] = useState<"signup" | "signin">(
+    params.get("mode") === "signup" ? "signup" : "signin",
+  );
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-  const [info, setInfo] = useState<string | null>(null);
+  const [info, setInfo] = useState<string | null>(
+    // /auth/callback sends people here when the confirmation link was opened
+    // in another browser: the email is confirmed, but there is no session yet.
+    params.get("confirmed") === "1"
+      ? "Your email is confirmed. Sign in to continue."
+      : null,
+  );
   const [loading, setLoading] = useState(false);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -23,9 +58,21 @@ export default function LoginPage() {
     const supabase = createClient();
 
     if (mode === "signup") {
-      const { data, error } = await supabase.auth.signUp({ email, password });
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        // Land on the dashboard already signed in after confirming the email.
+        options: { emailRedirectTo: `${location.origin}/auth/callback?confirmed=1` },
+      });
       if (error) {
-        setError(error.message);
+        setError(friendlyError(error.message));
+        setLoading(false);
+        return;
+      }
+      // An already-registered email comes back with no identities and no email sent.
+      if (data.user && data.user.identities?.length === 0) {
+        setError("This email already has an account. Sign in instead.");
+        setMode("signin");
         setLoading(false);
         return;
       }
@@ -41,7 +88,7 @@ export default function LoginPage() {
 
     const { error } = await supabase.auth.signInWithPassword({ email, password });
     if (error) {
-      setError(error.message);
+      setError(friendlyError(error.message));
       setLoading(false);
       return;
     }

@@ -20,7 +20,7 @@ export default function Home() {
             Log in
           </Link>
           <Link
-            href="/login"
+            href="/login?mode=signup"
             className="rounded-lg bg-emerald-600 px-4 py-2 text-white hover:bg-emerald-700"
           >
             Get started
@@ -45,7 +45,7 @@ export default function Home() {
         </p>
         <div className="mt-9 flex items-center justify-center gap-3">
           <Link
-            href="/login"
+            href="/login?mode=signup"
             className="rounded-xl bg-emerald-600 px-6 py-3 font-semibold text-white shadow-sm hover:bg-emerald-700"
           >
             Start tracking free
@@ -149,7 +149,7 @@ function PlanCard({
         ))}
       </ul>
       <Link
-        href="/login"
+        href="/login?mode=signup"
         className={`mt-8 block rounded-xl px-4 py-2.5 text-center font-semibold ${
           highlighted
             ? "bg-emerald-600 text-white hover:bg-emerald-700"

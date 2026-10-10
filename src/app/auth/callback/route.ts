@@ -15,5 +15,10 @@ export async function GET(request: Request) {
     }
   }
 
+  // A sign-up confirmation link is already verified by Supabase at this point;
+  // the code exchange only fails when it is opened in another browser.
+  if (searchParams.get("confirmed") === "1") {
+    return NextResponse.redirect(`${origin}/login?confirmed=1`);
+  }
   return NextResponse.redirect(`${origin}/login?error=auth`);
 }
